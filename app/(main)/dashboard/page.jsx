@@ -41,10 +41,7 @@ export default async function DashboardPage() {
       />
       </Suspense>
 
-        <DashboardOverview
-        accounts={accounts}
-        transactions={transactions || []}
-      />
+        
 
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

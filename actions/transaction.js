@@ -222,7 +222,8 @@ export async function getUserTransactions(query = {}) {
 
     return { success: true, data: transactions };
   } catch (error) {
-    throw new Error(error.message);
+    throw new Error(error?.message || "Failed to fetch transactions");
+
   }
 }
 

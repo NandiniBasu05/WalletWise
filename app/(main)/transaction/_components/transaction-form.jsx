@@ -2,11 +2,11 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -27,20 +27,16 @@ import { CreateAccountDrawer } from "@/components/create-account-drawer";
 import { cn } from "@/lib/utils";
 import { transactionSchema } from "@/app/lib/schema";
 import useFetch from "@/hooks/use-fetch";
-import { createTransaction } from "@/actions/transaction";
-import { useEffect } from "react";
+import { createTransaction, updateTransaction } from "@/actions/transaction";
 import { ReceiptScanner } from "./receipt-scanner";
-import { updateTransaction } from "@/actions/transaction";
 
 export default function AddTransactionForm({
-  accounts,
-  categories,
+  accounts = [],
+  categories = [],
   editMode = false,
   initialData = null,
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const editId = searchParams.get("edit");
 
   const {
     register,
@@ -48,7 +44,6 @@ export default function AddTransactionForm({
     formState: { errors },
     watch,
     setValue,
-    getValues,
     reset,
   } = useForm({
     resolver: zodResolver(transactionSchema),
@@ -69,7 +64,7 @@ export default function AddTransactionForm({
           type: "EXPENSE",
           amount: "",
           description: "",
-          accountId: accounts.find((ac) => ac.isDefault)?.id || "",
+          accountId: accounts.find((ac) => ac.isDefault)?.id || accounts[0]?.id || "",
           category: "",
           date: new Date(),
           isRecurring: false,
@@ -82,68 +77,75 @@ export default function AddTransactionForm({
     data: transactionResult,
   } = useFetch(editMode ? updateTransaction : createTransaction);
 
-const onSubmit = (data) => {
-    const formData = {
-      ...data,
-      amount: parseFloat(data.amount),
-    };
-
-    if (editMode) {
-      transactionFn(editId, formData);
-    } else {
-      transactionFn(formData);
-    }
-  };
-
-  useEffect(()=>{
-    if(transactionResult?.success && !transactionLoading){
-      toast.success(editMode
-        ? "Transaction updated successfully"
-        : "Transaction created successfully");
-      reset();
-      router.push(`/account/${transactionResult.data.accountId}`);
-    }
-  }, [transactionResult, transactionLoading, editMode]);
-
-
   const type = watch("type");
   const isRecurring = watch("isRecurring");
   const date = watch("date");
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
- const handleScanComplete = (scannedData) => {
-  if (scannedData) {
-    setValue("amount", scannedData.amount.toString());
-    setValue("date", new Date(scannedData.date));
-    if (scannedData.description) {
-      setValue("description", scannedData.description);
-    }
-    if (scannedData.category) {
-      const matchedCategory = categories.find(
-        (c) =>
-          c.name.toLowerCase() === scannedData.category.toLowerCase()
-      );
-      if (matchedCategory) {
-        setValue("type", matchedCategory.type);
-        setValue("category", matchedCategory.id);
+  const onSubmit = async (data) => {
+    try {
+      const formData = {
+        ...data,
+        amount: parseFloat(data.amount),
+      };
+
+      if (editMode) {
+        await transactionFn(initialData.id, formData);
       } else {
-        toast.warning(`Category "${scannedData.category}" not recognized`);
+        await transactionFn(formData);
+      }
+    } catch (error) {
+      toast.error("Failed to submit transaction");
+      console.error("Transaction error:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (transactionResult?.success && !transactionLoading) {
+      toast.success(
+        editMode
+          ? "Transaction updated successfully"
+          : "Transaction created successfully"
+      );
+      reset();
+      router.push(`/account/${transactionResult.data.accountId}`);
+    }
+  }, [transactionResult, transactionLoading, editMode, reset, router]);
+
+  const handleScanComplete = (scannedData) => {
+    if (scannedData) {
+      setValue("amount", scannedData.amount.toString());
+      setValue("date", new Date(scannedData.date));
+      
+      if (scannedData.description) {
+        setValue("description", scannedData.description);
+      }
+      
+      if (scannedData.category) {
+        const matchedCategory = categories.find(
+          (c) => c.name.toLowerCase() === scannedData.category.toLowerCase()
+        );
+        if (matchedCategory) {
+          setValue("type", matchedCategory.type);
+          setValue("category", matchedCategory.id);
+        } else {
+          toast.warning(`Category "${scannedData.category}" not recognized`);
+        }
       }
     }
-  }
-};
-
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-    
-    {!editMode && <ReceiptScanner onScanComplete={handleScanComplete}/>}
+      {!editMode && <ReceiptScanner onScanComplete={handleScanComplete} />}
+
+      {/* Transaction Type */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Type</label>
         <Select
+          value={watch("type")}
           onValueChange={(value) => setValue("type", value)}
-          
         >
           <SelectTrigger>
             <SelectValue placeholder="Select type" />
@@ -158,8 +160,8 @@ const onSubmit = (data) => {
         )}
       </div>
 
-      {/* AMOUNT + ACCOUNT */}
-       <div className="grid gap-6 md:grid-cols-2">
+      {/* Amount and Account */}
+      <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-2">
           <label className="text-sm font-medium">Amount</label>
           <Input
@@ -176,8 +178,8 @@ const onSubmit = (data) => {
         <div className="space-y-2">
           <label className="text-sm font-medium">Account</label>
           <Select
+            value={watch("accountId")}
             onValueChange={(value) => setValue("accountId", value)}
-            
           >
             <SelectTrigger>
               <SelectValue placeholder="Select account" />
@@ -204,31 +206,30 @@ const onSubmit = (data) => {
         </div>
       </div>
 
+      {/* Category */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Category</label>
+        <Select
+          value={watch("category")}
+          onValueChange={(value) => setValue("category", value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            {filteredCategories.map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.category && (
+          <p className="text-sm text-red-500">{errors.category.message}</p>
+        )}
+      </div>
 
-      {/* CATEGORY */}
-   <div className="space-y-2">
-  <label className="text-sm font-medium">Category</label>
-  <Select
-    value={watch("category")}   // make it controlled
-    onValueChange={(value) => setValue("category", value)}
-  >
-    <SelectTrigger>
-      <SelectValue placeholder="Select category" />
-    </SelectTrigger>
-    <SelectContent>
-      {filteredCategories.map((category) => (
-        <SelectItem key={category.id} value={category.id}>
-          {category.name}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-  {errors.category && (
-    <p className="text-sm text-red-500">{errors.category.message}</p>
-  )}
-</div>
-
-      {/* DATE */}
+      {/* Date */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Date</label>
         <Popover>
@@ -250,7 +251,6 @@ const onSubmit = (data) => {
               selected={date}
               onSelect={(date) => setValue("date", date)}
               disabled={(date) => date < new Date("1900-01-01")}
-
               initialFocus
             />
           </PopoverContent>
@@ -260,7 +260,8 @@ const onSubmit = (data) => {
         )}
       </div>
 
-       <div className="space-y-2">
+      {/* Description */}
+      <div className="space-y-2">
         <label className="text-sm font-medium">Description</label>
         <Input placeholder="Enter description" {...register("description")} />
         {errors.description && (
@@ -268,7 +269,7 @@ const onSubmit = (data) => {
         )}
       </div>
 
-      {/* RECURRING */}
+      {/* Recurring Transaction */}
       <div className="flex items-center justify-between rounded-lg border p-4">
         <div>
           <p className="text-base font-medium">Recurring Transaction</p>
@@ -286,8 +287,8 @@ const onSubmit = (data) => {
         <div className="space-y-2">
           <label className="text-sm font-medium">Recurring Interval</label>
           <Select
-            onValueChange={(value) => setValue("recurringInterval", value)}
             value={watch("recurringInterval") || ""}
+            onValueChange={(value) => setValue("recurringInterval", value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select interval" />
@@ -307,33 +308,33 @@ const onSubmit = (data) => {
         </div>
       )}
 
-    <div className="flex gap-4">
-  <Button
-    type="button"
-    variant="outline"
-    className="flex-1"
-    onClick={() => router.back()}
-  >
-    Cancel
-  </Button>
-  <Button
-    type="submit"
-    className="flex-1 text-white"
-    disabled={transactionLoading}
-  >
-    {transactionLoading ? (
-      <>
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        {editMode ? "Updating..." : "Creating..."}
-      </>
-    ) : editMode ? (
-      "Update Transaction"
-    ) : (
-      "Create Transaction"
-    )}
-  </Button>
-</div>
-
+      {/* Form Actions */}
+      <div className="flex gap-4">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          onClick={() => router.back()}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          className="flex-1 text-white"
+          disabled={transactionLoading}
+        >
+          {transactionLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {editMode ? "Updating..." : "Creating..."}
+            </>
+          ) : editMode ? (
+            "Update Transaction"
+          ) : (
+            "Create Transaction"
+          )}
+        </Button>
+      </div>
     </form>
   );
 }

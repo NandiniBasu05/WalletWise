@@ -6,6 +6,9 @@ import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
+
+
+
 const serializeTransaction = (obj) => {
   const serialized = { ...obj };
   if (obj.balance) {
@@ -48,6 +51,7 @@ export async function getUserAccounts() {
     return serializedAccounts;
   } catch (error) {
     console.error(error.message);
+    throw new Error("Failed to fetch accounts");
   }
 }
 
