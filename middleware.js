@@ -12,10 +12,10 @@ const aj = arcjet({
   key: process.env.ARCJET_KEY,
   rules: [
     shield({
-      mode: "LIVE",
+      mode: "MONITOR", // prevent blocking during debug
     }),
     detectBot({
-      mode: "LIVE",
+      mode: "MONITOR", // prevent blocking during debug
       allow: ["CATEGORY:SEARCH_ENGINE", "GO_HTTP"],
     }),
   ],
@@ -24,11 +24,8 @@ const aj = arcjet({
 const clerk = clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
 
-  
   const publicRoutes = ["/", "/favicon.ico"];
-  const isPublicRoute = publicRoutes.some((route) =>
-    req.nextUrl.pathname === route
-  );
+  const isPublicRoute = publicRoutes.includes(req.nextUrl.pathname);
 
   if (!userId && isProtectedRoute(req) && !isPublicRoute) {
     const { redirectToSignIn } = await auth();
@@ -38,7 +35,13 @@ const clerk = clerkMiddleware(async (auth, req) => {
   return NextResponse.next();
 });
 
-export default createMiddleware(aj, clerk);
+export default async function middleware(req) {
+  const publicRoutes = ["/", "/favicon.ico"];
+  if (publicRoutes.includes(req.nextUrl.pathname)) {
+    return clerk(req);
+  }
+  return createMiddleware(aj, clerk)(req);
+}
 
 export const config = {
   matcher: [
