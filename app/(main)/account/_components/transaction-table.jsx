@@ -126,7 +126,7 @@ export function TransactionTable({ transactions }) {
     return result;
   }, [transactions, searchTerm, typeFilter, recurringFilter, sortConfig]);
 
-  // Pagination calculations
+  
   const totalPages = Math.ceil(
     filteredAndSortedTransactions.length / ITEMS_PER_PAGE
   );
@@ -202,7 +202,7 @@ export function TransactionTable({ transactions }) {
       {deleteLoading && (
         <BarLoader className="mt-4" width={"100%"} color="#A96F44" />
       )}
-      {/* Filters */}
+    
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -249,7 +249,7 @@ export function TransactionTable({ transactions }) {
             </SelectContent>
           </Select>
 
-          {/* Bulk Actions */}
+          
           {selectedIds.length > 0 && (
             <div className="flex items-center gap-2">
               <Button
@@ -276,7 +276,7 @@ export function TransactionTable({ transactions }) {
         </div>
       </div>
 
-      {/* Transactions Table */}
+    
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -452,7 +452,7 @@ export function TransactionTable({ transactions }) {
         </Table>
       </div>
 
-      {/* Pagination */}
+      
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
           <Button

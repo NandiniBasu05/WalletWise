@@ -8,12 +8,12 @@ const isProtectedRoute = createRouteMatcher([
   "/transaction(.*)",
 ]);
 
-// Create Arcjet middleware
+
 const aj = arcjet({
   key: process.env.ARCJET_KEY,
-  // characteristics: ["userId"], // Track based on Clerk userId
+  
   rules: [
-    // Shield protection for content and security
+    
     shield({
       mode: "LIVE",
     }),
@@ -25,7 +25,7 @@ const aj = arcjet({
   ],
 });
 
-// Create base Clerk middleware
+
 const clerk = clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
 
@@ -37,14 +37,14 @@ const clerk = clerkMiddleware(async (auth, req) => {
   return NextResponse.next();
 });
 
-// Chain middlewares - ArcJet runs first, then Clerk
+
 export default createMiddleware(aj, clerk);
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
+    
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
+    
     "/(api|trpc)(.*)",
   ],
 };

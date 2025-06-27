@@ -140,7 +140,7 @@ export default function AddTransactionForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {!editMode && <ReceiptScanner onScanComplete={handleScanComplete} />}
 
-      {/* Transaction Type */}
+  
       <div className="space-y-2">
         <label className="text-sm font-medium">Type</label>
         <Select
@@ -160,7 +160,7 @@ export default function AddTransactionForm({
         )}
       </div>
 
-      {/* Amount and Account */}
+    
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-2">
           <label className="text-sm font-medium">Amount</label>
@@ -206,7 +206,7 @@ export default function AddTransactionForm({
         </div>
       </div>
 
-      {/* Category */}
+      
       <div className="space-y-2">
         <label className="text-sm font-medium">Category</label>
         <Select
@@ -229,7 +229,7 @@ export default function AddTransactionForm({
         )}
       </div>
 
-      {/* Date */}
+      
       <div className="space-y-2">
         <label className="text-sm font-medium">Date</label>
         <Popover>
@@ -260,7 +260,7 @@ export default function AddTransactionForm({
         )}
       </div>
 
-      {/* Description */}
+    
       <div className="space-y-2">
         <label className="text-sm font-medium">Description</label>
         <Input placeholder="Enter description" {...register("description")} />
@@ -269,7 +269,7 @@ export default function AddTransactionForm({
         )}
       </div>
 
-      {/* Recurring Transaction */}
+      
       <div className="flex items-center justify-between rounded-lg border p-4">
         <div>
           <p className="text-base font-medium">Recurring Transaction</p>
@@ -308,7 +308,7 @@ export default function AddTransactionForm({
         </div>
       )}
 
-      {/* Form Actions */}
+  
       <div className="flex gap-4">
         <Button
           type="button"

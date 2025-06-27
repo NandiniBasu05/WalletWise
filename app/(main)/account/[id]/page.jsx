@@ -9,7 +9,7 @@ import { AccountChart } from "../_components/account-chart";
 
 export default async function AccountPage({ children, params }) {
   try {
-    // Await the params first as required in Next.js 15
+    
     const { id } = await params;
 
     const accountData = await getAccountWithTransactions(id);

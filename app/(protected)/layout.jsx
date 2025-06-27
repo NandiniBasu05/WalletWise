@@ -1,5 +1,3 @@
-// app/(protected)/layout.jsx
-
 import { checkUser } from "@/lib/checkUser";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";

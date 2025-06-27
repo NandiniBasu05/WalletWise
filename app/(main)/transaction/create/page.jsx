@@ -7,10 +7,10 @@ import { getTransaction } from "@/actions/transaction";
 
 export default async function Page({ searchParams }) {
   try {
-    // First await the searchParams promise
+    
     const awaitedSearchParams = await searchParams;
     
-    // Then safely access the edit parameter
+    
     const edit = typeof awaitedSearchParams?.edit === 'string' 
       ? awaitedSearchParams.edit 
       : undefined;
