@@ -1,13 +1,10 @@
 "use server";
 
-// import aj from "@/lib/arcjet";
+import aj from "@/lib/arcjet";
 import { db } from "@/lib/prisma";
-// import { request } from "@arcjet/next";
+import { request } from "@arcjet/next";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-
-
-
 
 const serializeTransaction = (obj) => {
   const serialized = { ...obj };
@@ -51,7 +48,6 @@ export async function getUserAccounts() {
     return serializedAccounts;
   } catch (error) {
     console.error(error.message);
-    throw new Error("Failed to fetch accounts");
   }
 }
 
@@ -158,4 +154,3 @@ export async function getDashboardData() {
 
   return transactions.map(serializeTransaction);
 }
-
