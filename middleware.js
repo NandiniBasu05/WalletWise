@@ -18,7 +18,8 @@ const aj = arcjet({
       mode: "LIVE",
     }),
    detectBot({
-  mode: process.env.NODE_ENV === "production" ? "DRY_RUN" : "OFF"
+  mode: process.env.NODE_ENV === "production" ? "DRY_RUN" : "OFF",
+  allow: ["CATEGORY:SEARCH_ENGINE", "GO_HTTP"]
 })
 
   ],
