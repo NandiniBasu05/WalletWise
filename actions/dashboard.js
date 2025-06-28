@@ -3,50 +3,33 @@
 import aj from "@/lib/arcjet";
 import { db } from "@/lib/prisma";
 import { request } from "@arcjet/next";
-import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { checkUser } from "@/lib/checkUser";
 
 const serializeTransaction = (obj) => {
-  const serialized = { ...obj };
-
-  if (typeof obj.balance?.toNumber === "function") {
-    serialized.balance = obj.balance.toNumber();
-  }
-
-  if (typeof obj.amount?.toNumber === "function") {
-    serialized.amount = obj.amount.toNumber();
-  }
-
-  return serialized;
+  return {
+    ...obj,
+    balance: typeof obj.balance?.toNumber === "function" ? obj.balance.toNumber() : obj.balance,
+    amount: typeof obj.amount?.toNumber === "function" ? obj.amount.toNumber() : obj.amount,
+  };
 };
-
 
 export async function getUserAccounts() {
   const user = await checkUser();
   if (!user) throw new Error("Unauthorized");
 
-  try {
-    const accounts = await db.account.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        _count: {
-          select: {
-            transactions: true,
-          },
-        },
+  const accounts = await db.account.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    include: {
+      _count: {
+        select: { transactions: true },
       },
-    });
+    },
+  });
 
-    const serializedAccounts = accounts.map(serializeTransaction);
-    return serializedAccounts;
-  } catch (error) {
-    console.error(error.message);
-    throw new Error("Failed to fetch accounts");
-  }
+  return accounts.map(serializeTransaction);
 }
-
 
 export async function createAccount(data) {
   try {
@@ -62,19 +45,9 @@ export async function createAccount(data) {
 
     if (decision.isDenied()) {
       if (decision.reason.isRateLimit()) {
-        const { remaining, reset } = decision.reason;
-        console.error({
-          code: "RATE_LIMIT_EXCEEDED",
-          details: {
-            remaining,
-            resetInSeconds: reset,
-          },
-        });
-
         throw new Error("Too many requests. Please try again later.");
       }
-
-      throw new Error("Request blocked");
+      throw new Error("Request blocked.");
     }
 
     const balanceFloat = parseFloat(data.balance);
